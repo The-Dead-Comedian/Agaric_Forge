@@ -15,14 +15,14 @@ public class AgaricCreativeTab {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, AgaricMod.MOD_ID);
 
-    public static final RegistryObject<CreativeModeTab> TUTORIAL_TAB = CREATIVE_MODE_TABS.register("tutorial_tab",
+    public static final RegistryObject<CreativeModeTab> AGARIC_TAB = CREATIVE_MODE_TABS.register("agaric_tab",
             () -> CreativeModeTab.builder().icon(() -> new ItemStack(AgaricItems.ROTTEN_FLESH_ON_A_STICK.get()))
                     .title(Component.translatable("creativetab.agaric_tab"))
                     .displayItems((pParameters, pOutput) -> {
                         pOutput.accept(AgaricItems.ROTTEN_FLESH_ON_A_STICK.get());
 
                         pOutput.accept(AgaricBlocks.GREEN_MUSHROOM_BLOCK.get());
-
+                        pOutput.accept(AgaricBlocks.GREEN_MUSHROOM.get());
 
 
 

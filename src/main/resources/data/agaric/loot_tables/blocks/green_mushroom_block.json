@@ -48,7 +48,7 @@
                   "function": "minecraft:explosion_decay"
                 }
               ],
-              "name": "agaric:green_mushroom_block"
+              "name": "agaric:green_mushroom"
             }
           ]
         }
