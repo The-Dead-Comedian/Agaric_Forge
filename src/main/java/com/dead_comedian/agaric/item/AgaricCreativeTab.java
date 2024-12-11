@@ -2,6 +2,7 @@ package com.dead_comedian.agaric.item;
 
 
 import com.dead_comedian.agaric.AgaricMod;
+import com.dead_comedian.agaric.block.AgaricBlocks;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -20,7 +21,7 @@ public class AgaricCreativeTab {
                     .displayItems((pParameters, pOutput) -> {
                         pOutput.accept(AgaricItems.ROTTEN_FLESH_ON_A_STICK.get());
 
-
+                        pOutput.accept(AgaricBlocks.GREEN_MUSHROOM_BLOCK.get());
 
 
 
