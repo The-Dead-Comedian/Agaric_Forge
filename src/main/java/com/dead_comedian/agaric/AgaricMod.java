@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 @Mod(AgaricMod.MOD_ID)
 public class AgaricMod
 {
+    //asd
     public static final String MOD_ID = "agaric";
     // Directly reference a slf4j logger
     private static final Logger LOGGER = LogUtils.getLogger();
