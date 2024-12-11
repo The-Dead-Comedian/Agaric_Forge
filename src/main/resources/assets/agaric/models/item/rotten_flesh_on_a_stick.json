@@ -1,0 +1,6 @@
+{
+  "parent": "item/handheld_rod",
+  "textures": {
+    "layer0": "agaric:item/rotten_flesh_on_a_stick"
+  }
+}

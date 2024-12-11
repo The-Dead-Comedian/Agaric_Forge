@@ -1,5 +1,8 @@
 package com.dead_comedian.agaric;
 
+import com.dead_comedian.agaric.block.AgaricBlocks;
+import com.dead_comedian.agaric.item.AgaricCreativeTab;
+import com.dead_comedian.agaric.item.AgaricItems;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -30,6 +33,12 @@ public class AgaricMod
         MinecraftForge.EVENT_BUS.register(this);
 
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+
+
+        AgaricBlocks.register(modEventBus);
+        AgaricItems.register(modEventBus);
+        AgaricCreativeTab.register(modEventBus);
+
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)
