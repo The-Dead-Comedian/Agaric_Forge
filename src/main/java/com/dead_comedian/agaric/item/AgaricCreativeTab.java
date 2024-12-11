@@ -20,6 +20,7 @@ public class AgaricCreativeTab {
                     .title(Component.translatable("creativetab.agaric_tab"))
                     .displayItems((pParameters, pOutput) -> {
                         pOutput.accept(AgaricItems.ROTTEN_FLESH_ON_A_STICK.get());
+                        pOutput.accept(AgaricItems.SPORDER_SPAWN_EGG.get());
 
                         pOutput.accept(AgaricBlocks.GREEN_MUSHROOM_BLOCK.get());
                         pOutput.accept(AgaricBlocks.GREEN_MUSHROOM.get());

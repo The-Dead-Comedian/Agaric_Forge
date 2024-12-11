@@ -1,6 +1,12 @@
 {
   "item.agaric.rotten_flesh_on_a_stick": "Rotten Flesh On A Stick",
+  "item.agaric.sporder_spawn_egg": "Sporder Spawn Egg",
+
+  "entity.agaric.sporder": "sporder",
+
+
   "block.agaric.green_mushroom_block": "Green Mushroom Block",
+  "block.agaric.green_mushroom": "Green Mushroom",
 
 
   "creativetab.agaric_tab": "Agaric Tab"

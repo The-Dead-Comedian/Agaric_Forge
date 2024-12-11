@@ -1,9 +1,12 @@
 package com.dead_comedian.agaric;
 
 import com.dead_comedian.agaric.block.AgaricBlocks;
+import com.dead_comedian.agaric.entity.AgaricEntities;
+import com.dead_comedian.agaric.entity.client.renderer.SporderRenderer;
 import com.dead_comedian.agaric.item.AgaricCreativeTab;
 import com.dead_comedian.agaric.item.AgaricItems;
 import com.mojang.logging.LogUtils;
+import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerStartingEvent;
@@ -37,6 +40,7 @@ public class AgaricMod
 
         AgaricBlocks.register(modEventBus);
         AgaricItems.register(modEventBus);
+        AgaricEntities.register(modEventBus);
         AgaricCreativeTab.register(modEventBus);
 
     }
@@ -60,6 +64,8 @@ public class AgaricMod
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event)
         {
+            EntityRenderers.register(AgaricEntities.SPORDER.get(), SporderRenderer::new);
+
 
         }
     }
