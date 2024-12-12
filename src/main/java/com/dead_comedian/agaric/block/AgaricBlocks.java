@@ -27,7 +27,7 @@ public class AgaricBlocks {
 
 
     public static final RegistryObject<Block> GREEN_MUSHROOM_BLOCK = registerBlock("green_mushroom_block",
-            () -> new HugeMushroomBlock(BlockBehaviour.Properties.of()
+            () -> new GreenMushroomBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_GREEN)
                     .instrument(NoteBlockInstrument.BASS)
                     .strength(0.2F)
