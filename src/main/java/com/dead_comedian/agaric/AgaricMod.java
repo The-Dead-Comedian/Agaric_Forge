@@ -5,6 +5,7 @@ import com.dead_comedian.agaric.entity.AgaricEntities;
 import com.dead_comedian.agaric.entity.client.renderer.SporderRenderer;
 import com.dead_comedian.agaric.item.AgaricCreativeTab;
 import com.dead_comedian.agaric.item.AgaricItems;
+import com.dead_comedian.agaric.particle.AgaricParticles;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraftforge.api.distmarker.Dist;
@@ -42,6 +43,7 @@ public class AgaricMod
         AgaricItems.register(modEventBus);
         AgaricEntities.register(modEventBus);
         AgaricCreativeTab.register(modEventBus);
+        AgaricParticles.register(modEventBus);
 
     }
 

@@ -65,10 +65,18 @@ public class SporderModel<T extends Entity> extends HierarchicalModel<T> {
 	@Override
 	public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
 		this.root().getAllParts().forEach(ModelPart::resetPose);
-		this.applyHeadRotation(netHeadYaw, headPitch, ageInTicks);
 
-		this.animateWalk(AgaricAnimations.WALK, limbSwing, limbSwingAmount, 2f, 2.5f);
-		this.animate(((SporderEntity) entity).idleAnimationState, AgaricAnimations.IDLE, ageInTicks, 1f);
+		if(!((SporderEntity)entity).isOrderedToSit()){
+			this.applyHeadRotation(netHeadYaw, headPitch, ageInTicks);
+			this.animateWalk(AgaricAnimations.WALK_SPORDER, limbSwing, limbSwingAmount, 2f, 2.5f);
+		}
+
+
+
+		this.animate(((SporderEntity) entity).idleAnimationState, AgaricAnimations.IDLE_SPORDER, ageInTicks, 1f);
+        this.animate(((SporderEntity) entity).sitAnimationState, AgaricAnimations.SIT_SPORDER, ageInTicks, 1f);
+		this.animate(((SporderEntity) entity).sitDownAnimationState, AgaricAnimations.SIT_TRANSITION_IN_SPORDER, ageInTicks, 1f);
+		this.animate(((SporderEntity) entity).sitUpAnimationState, AgaricAnimations.SIT_TRANSITION_OUT_SPORDER, ageInTicks, 1f);
 	}
 
 	private void applyHeadRotation(float pNetHeadYaw, float pHeadPitch, float pAgeInTicks) {
