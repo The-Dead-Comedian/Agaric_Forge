@@ -2,11 +2,7 @@ package com.dead_comedian.agaric.entity;
 
 import com.dead_comedian.agaric.item.AgaricItems;
 import com.dead_comedian.agaric.particle.AgaricParticles;
-import com.google.common.annotations.VisibleForTesting;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -20,7 +16,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.camel.Camel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -28,8 +23,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class SporderEntity extends TamableAnimal implements ItemSteerable, PlayerRideableJumping {
     protected SporderEntity(EntityType<? extends TamableAnimal> pEntityType, Level pLevel) {
@@ -39,9 +32,7 @@ public class SporderEntity extends TamableAnimal implements ItemSteerable, Playe
     ////////////
     //VARIABLE//
     ////////////
-
-
-    int particleTick = 1;
+    int particleTick = 0;
 
     public final AnimationState idleAnimationState = new AnimationState();
     private int idleAnimationTimeout = 0;
@@ -50,42 +41,8 @@ public class SporderEntity extends TamableAnimal implements ItemSteerable, Playe
     private int sitAnimationTimeout = 0;
 
     public final AnimationState sitUpAnimationState = new AnimationState();
-    private int sitUpDuration = 0;
     public final AnimationState sitDownAnimationState = new AnimationState();
-    private int sitDownDuration = 0;
 
-    public static final EntityDataAccessor<Long> LAST_POSE_CHANGE_TICK = SynchedEntityData.defineId(SporderEntity.class, EntityDataSerializers.LONG);
-
-
-    ///////
-    //NBT//
-    ///////
-
-
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(LAST_POSE_CHANGE_TICK, 0L);
-    }
-    @VisibleForTesting
-    public void resetLastPoseChangeTick(long pLastPoseChangeTick) {
-        this.entityData.set(LAST_POSE_CHANGE_TICK, pLastPoseChangeTick);
-    }
-
-    public void addAdditionalSaveData(CompoundTag pCompound) {
-        super.addAdditionalSaveData(pCompound);
-        pCompound.putLong("LastPoseTick", this.entityData.get(LAST_POSE_CHANGE_TICK));
-    }
-
-
-    public void readAdditionalSaveData(CompoundTag pCompound) {
-        super.readAdditionalSaveData(pCompound);
-        long i = pCompound.getLong("LastPoseTick");
-        if (i < 0L) {
-            this.setPose(Pose.SITTING);
-        }
-
-        this.resetLastPoseChangeTick(i);
-    }
 
     //////////
     //RIDING//
@@ -132,20 +89,8 @@ public class SporderEntity extends TamableAnimal implements ItemSteerable, Playe
     public void tick() {
         super.tick();
 
-        if (sitDownAnimationState.isStarted()) {
-            sitDownDuration++;
-        } else {
-            sitDownDuration = 1;
-
-        }
-
 
         if (this.isOrderedToSit()) {
-            List<Entity> entityBelow = this.level().getEntities(this, this.getBoundingBox().expandTowards(0, 0.2, 0));
-
-            for (Entity entity : entityBelow) {
-                entity.addDeltaMovement(new Vec3(0, 1, 0));
-            }
 
             level().addParticle(AgaricParticles.SLEEP.get(), this.getX(), this.getY(), this.getZ(), 1, 1, 1);
 
@@ -178,44 +123,6 @@ public class SporderEntity extends TamableAnimal implements ItemSteerable, Playe
     /////////////
 
 
-    public void sitDown() {
-        if (!this.isCamelSitting()) {
-            this.playSound(SoundEvents.CAMEL_SIT, 1.0F, 1.0F);
-            this.setPose(Pose.SITTING);
-            this.resetLastPoseChangeTick(-this.level().getGameTime());
-        }
-    }
-
-    public void standUp() {
-        if (this.isCamelSitting()) {
-            this.playSound(SoundEvents.CAMEL_STAND, 1.0F, 1.0F);
-            this.setPose(Pose.STANDING);
-            this.resetLastPoseChangeTick(this.level().getGameTime());
-        }
-    }
-
-
-    public boolean isCamelVisuallySitting() {
-        return this.getPoseTime() < 0L != this.isCamelSitting();
-    }
-
-    public long getPoseTime() {
-        return this.level().getGameTime() - Math.abs(this.entityData.get(LAST_POSE_CHANGE_TICK));
-    }
-
-    private boolean isVisuallySittingDown() {
-        return this.isCamelSitting() && this.getPoseTime() < 20 && this.getPoseTime() >= 0L;
-    }
-
-    public boolean isCamelSitting() {
-        return this.entityData.get(LAST_POSE_CHANGE_TICK) < 0L;
-    }
-
-    public boolean isInPoseTransition() {
-        long i = this.getPoseTime();
-        return i < (long) (20);
-    }
-
     @Override
     protected void updateWalkAnimation(float pPartialTick) {
         float f;
@@ -233,28 +140,18 @@ public class SporderEntity extends TamableAnimal implements ItemSteerable, Playe
 
             this.idleAnimationState.startIfStopped(this.tickCount);
             this.sitAnimationState.stop();
-            sitDownDuration = 1;
         }
 
-            if (this.isCamelVisuallySitting()) {
-                this.sitUpAnimationState.stop();
-                this.idleAnimationState.stop();
-                if (this.isVisuallySittingDown()) {
-                    this.sitDownAnimationState.startIfStopped(this.tickCount);
-                    this.sitAnimationState.stop();
-                } else {
-                    this.sitDownAnimationState.stop();
-                    this.sitAnimationState.startIfStopped(this.tickCount);
-                }
-            } else {
-                this.sitDownAnimationState.stop();
-                this.sitAnimationState.stop();
-
-                this.sitUpAnimationState.animateWhen(this.isInPoseTransition() && this.getPoseTime() >= 0L, this.tickCount);
-            }
-
+        if (this.isOrderedToSit()) {
+            this.sitAnimationState.start(this.tickCount);
+            this.idleAnimationState.stop();
+        }
 
     }
+
+    ///////
+    //NBT//
+    ///////
 
 
     //////////
@@ -288,13 +185,6 @@ public class SporderEntity extends TamableAnimal implements ItemSteerable, Playe
 
 
                 this.setOrderedToSit(!this.isOrderedToSit());
-
-                if(this.isOrderedToSit()){
-                    sitDown();
-                }else {
-                    standUp();
-                }
-
 
                 this.jumping = false;
                 this.navigation.stop();
