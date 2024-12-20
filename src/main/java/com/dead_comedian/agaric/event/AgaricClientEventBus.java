@@ -17,6 +17,7 @@ public class AgaricClientEventBus {
     @SubscribeEvent
     public static void registerLayer(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(AgaricModelLayers.SPORDER_LAYER, SporderModel::createBodyLayer);
+        event.registerLayerDefinition(AgaricModelLayers.SPORDER_SADDLE_LAYER, SporderModel::createBodyLayer);
     }
     @SubscribeEvent
     public static void registerParticleFactories(RegisterParticleProvidersEvent event) {

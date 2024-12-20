@@ -8,11 +8,13 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.client.renderer.entity.layers.SaddleLayer;
 import net.minecraft.resources.ResourceLocation;
 
 public class SporderRenderer extends MobRenderer<SporderEntity, SporderModel<SporderEntity>> {
     public SporderRenderer(EntityRendererProvider.Context pContext) {
         super(pContext, new SporderModel<>(pContext.bakeLayer(AgaricModelLayers.SPORDER_LAYER)), 0.75f);
+        this.addLayer(new SaddleLayer(this, new SporderModel(pContext.bakeLayer(AgaricModelLayers.SPORDER_SADDLE_LAYER)), new ResourceLocation(AgaricMod.MOD_ID, "textures/entity/sporder_saddle.png")));
 
     }
 
