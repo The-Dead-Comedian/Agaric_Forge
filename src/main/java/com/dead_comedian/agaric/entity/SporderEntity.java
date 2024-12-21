@@ -15,17 +15,18 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.monster.Strider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,9 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
     ////////////
 
 
-
+    protected boolean allowStandSliding;
+    protected boolean isJumping;
+    protected float playerJumpPendingScale;
     private static final EntityDataAccessor<Integer> DATA_BOOST_TIME = SynchedEntityData.defineId(SporderEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_SADDLE_ID = SynchedEntityData.defineId(SporderEntity.class, EntityDataSerializers.BOOLEAN);
     private final ItemBasedSteering steering = new ItemBasedSteering(this.entityData, DATA_BOOST_TIME, DATA_SADDLE_ID);
@@ -66,7 +69,6 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
         super.onSyncedDataUpdated(pKey);
     }
 
-
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(LAST_POSE_CHANGE_TICK, 0L);
@@ -82,10 +84,13 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
     public void addAdditionalSaveData(CompoundTag pCompound) {
         super.addAdditionalSaveData(pCompound);
         pCompound.putLong("LastPoseTick", this.entityData.get(LAST_POSE_CHANGE_TICK));
+        pCompound.putBoolean("Saddled", this.isSaddled());
     }
 
     public void readAdditionalSaveData(CompoundTag pCompound) {
         super.readAdditionalSaveData(pCompound);
+        this.steering.setSaddle(pCompound.getBoolean("Saddled"));
+
         long i = pCompound.getLong("LastPoseTick");
         if (i < 0L) {
             this.setPose(Pose.SITTING);
@@ -97,56 +102,155 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
     //////////
     //RIDING//
     //////////
-    @Override
-    public boolean boost() {
-        return false;
-    }
+
+    //jump
+
 
     @Override
+    protected int calculateFallDamage(float pFallDistance, float pDamageMultiplier) {
+        return 0;
+    }
+
+    public boolean isJumping() {
+        return this.isJumping;
+    }
+
+    public void setIsJumping(boolean pJumping) {
+        this.isJumping = pJumping;
+    }
+
+    public double getCustomJump() {
+        return this.getAttributeValue(Attributes.JUMP_STRENGTH);
+    }
+
+    protected void executeRidersJump(float pPlayerJumpPendingScale, Vec3 pTravelVector) {
+        double d0 = this.getCustomJump() * (double) pPlayerJumpPendingScale * (double) this.getBlockJumpFactor();
+        double d1 = d0 + (double) this.getJumpBoostPower();
+        Vec3 vec3 = this.getDeltaMovement();
+        this.setDeltaMovement(vec3.x, d1, vec3.z);
+        this.setIsJumping(true);
+        this.hasImpulse = true;
+        net.minecraftforge.common.ForgeHooks.onLivingJump(this);
+        if (pTravelVector.z > 0.0D) {
+            float f = Mth.sin(this.getYRot() * ((float) Math.PI / 180F));
+            float f1 = Mth.cos(this.getYRot() * ((float) Math.PI / 180F));
+            this.setDeltaMovement(this.getDeltaMovement().add((double) (-0.4F * f * pPlayerJumpPendingScale), 1.0D, (double) (0.4F * f1 * pPlayerJumpPendingScale)));
+        }
+
+    }
+
     public void onPlayerJump(int pJumpPower) {
+        if (this.isSaddled()) {
+            if (pJumpPower < 0) {
+                pJumpPower = 0;
+            } else {
+                this.allowStandSliding = true;
+
+            }
+
+            if (pJumpPower >= 90) {
+                this.playerJumpPendingScale = 1.0F;
+            } else {
+                this.playerJumpPendingScale = 0.4F + 0.4F * (float) pJumpPower / 90.0F;
+            }
+
+        }
     }
 
-    @Override
     public boolean canJump() {
         return this.isSaddled();
     }
 
-
-    @Override
     public void handleStartJump(int pJumpPower) {
+        this.allowStandSliding = true;
     }
 
     @Override
     public void handleStopJump() {
     }
 
+    //riding
 
     public double getPassengersRidingOffset() {
         float f = Math.min(0.25F, this.walkAnimation.speed());
         float f1 = this.walkAnimation.position();
-        return (double) this.getBbHeight() - 0.19D + (double) (0.12F * Mth.cos(f1 * 1.5F) * 2.0F * f);
+        if (!this.isOrderedToSit()) {
+            return (double) this.getBbHeight() + 0.2F + (double) (0.12F * Mth.cos(f1 * 2F) * 2.0F * f);
+        }else{
+            return (double) this.getBbHeight() - 0.2F + (double) (0.12F * Mth.cos(f1 * 2F) * 2.0F * f);
+        }
     }
 
+    protected Vec3 getRiddenInput(Player pPlayer, Vec3 pTravelVector) {
+        if (this.onGround() && this.playerJumpPendingScale == 0.0F && !this.allowStandSliding) {
+            return Vec3.ZERO;
+        } else {
+            float f = pPlayer.xxa * 0.5F;
+            float f1 = pPlayer.zza;
+            if (f1 <= 0.0F) {
+                f1 *= 0.25F;
+            }
+
+            return new Vec3((double) f, 0.0D, (double) f1);
+        }
+    }
+
+
+    protected float getRiddenSpeed(Player pPlayer) {
+        if (!this.isOrderedToSit()) {
+            return (float) (this.getAttributeValue(Attributes.MOVEMENT_SPEED) * (double) this.steering.boostFactor());
+        } else {
+            return 0;
+        }
+    }
+
+    protected float nextStep() {
+        return this.moveDist + 0.6F;
+    }
+
+    @Override
+    public boolean boost() {
+        return this.steering.boost(this.getRandom());
+    }
+
+    protected void tickRidden(Player pPlayer, Vec3 pTravelVector) {
+        super.tickRidden(pPlayer, pTravelVector);
+        if (!this.isOrderedToSit()) {
+            Vec2 vec2 = this.getRiddenRotation(pPlayer);
+            this.setRot(vec2.y, vec2.x);
+            this.yRotO = this.yBodyRot = this.yHeadRot = this.getYRot();
+            if (this.isControlledByLocalInstance()) {
+                if (this.onGround()) {
+                    this.setIsJumping(false);
+                    if (this.playerJumpPendingScale > 0.0F && !this.isJumping()) {
+                        this.executeRidersJump(this.playerJumpPendingScale, pTravelVector);
+                    }
+                    this.playerJumpPendingScale = 0.0F;
+                }
+            }
+        }
+    }
+
+    protected Vec2 getRiddenRotation(LivingEntity pEntity) {
+        return new Vec2(pEntity.getXRot() * 0.5F, pEntity.getYRot());
+    }
+
+    @Override
+    public boolean requiresCustomPersistence() {
+        return super.requiresCustomPersistence() || this.isTame();
+    }
 
     @javax.annotation.Nullable
     public LivingEntity getControllingPassenger() {
         Entity entity = this.getFirstPassenger();
         if (entity instanceof Player player) {
-            if (player.getMainHandItem().is(Items.WARPED_FUNGUS_ON_A_STICK) || player.getOffhandItem().is(Items.WARPED_FUNGUS_ON_A_STICK)) {
+            if (player.getMainHandItem().is(AgaricItems.ROTTEN_FLESH_ON_A_STICK.get()) || player.getOffhandItem().is(AgaricItems.ROTTEN_FLESH_ON_A_STICK.get())) {
                 return player;
             }
         }
 
         return null;
     }
-
-    protected void tickRidden(Player pPlayer, Vec3 pTravelVector) {
-        this.setRot(pPlayer.getYRot(), pPlayer.getXRot() * 0.5F);
-        this.yRotO = this.yBodyRot = this.yHeadRot = this.getYRot();
-
-        super.tickRidden(pPlayer, pTravelVector);
-    }
-
 
     ////////
     //MISC//
@@ -190,7 +294,7 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return Animal.createLivingAttributes().add(Attributes.MAX_HEALTH, 20D).add(Attributes.FOLLOW_RANGE, 24D).add(Attributes.MOVEMENT_SPEED, 0.25D).add(Attributes.ARMOR_TOUGHNESS, 0.1f).add(Attributes.ATTACK_KNOCKBACK, 0.5f).add(Attributes.ATTACK_DAMAGE, 2f);
+        return Animal.createLivingAttributes().add(Attributes.JUMP_STRENGTH, 3).add(Attributes.MAX_HEALTH, 20D).add(Attributes.FOLLOW_RANGE, 24D).add(Attributes.MOVEMENT_SPEED, 0.25D).add(Attributes.ARMOR_TOUGHNESS, 0.1f).add(Attributes.ATTACK_KNOCKBACK, 0.5f).add(Attributes.ATTACK_DAMAGE, 2f);
     }
 
     /////////////
@@ -290,16 +394,21 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
 
         //riding
         boolean flag = this.isFood(pPlayer.getItemInHand(pHand));
-        if (!flag && this.isSaddled() && !this.isVehicle() && !pPlayer.isSecondaryUseActive() && pPlayer.isCrouching()) {
+        if (!flag && this.isSaddled() && !this.isVehicle() && !pPlayer.isSecondaryUseActive() && itemstack.is(AgaricItems.ROTTEN_FLESH_ON_A_STICK.get())) {
             if (!this.level().isClientSide) {
                 pPlayer.startRiding(this);
+
             }
 
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
 
-        if (this.isTame() && itemstack.is(Items.SADDLE)) {
+        //unequip saddle
 
+        if (this.isSaddled() && itemstack.is(Items.SHEARS)) {
+            this.steering.setSaddle(false);
+            this.level().playSound((Player) null, this, SoundEvents.STRIDER_SADDLE, pPlayer.getSoundSource(), 0.5F, 1.0F);
+            this.spawnAtLocation(new ItemStack(Items.SADDLE), 1.7F);
         }
 
         //sitting
@@ -308,23 +417,16 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
             InteractionResult interactionresult = super.mobInteract(pPlayer, pHand);
             if (!interactionresult.consumesAction() && this.isOwnedBy(pPlayer) && !pPlayer.isCrouching()) {
 
-
                 System.out.println(this.isOrderedToSit());
-
-
                 this.setOrderedToSit(!this.isOrderedToSit());
-
                 if (this.isOrderedToSit()) {
+                    this.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 1200, 1));
                     sitDown();
                 } else {
                     standUp();
                 }
-
-
                 this.jumping = false;
                 this.navigation.stop();
-
-
                 return InteractionResult.SUCCESS;
             }
         }
@@ -333,20 +435,9 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
         if (this.level().isClientSide) {
             boolean flag1 = this.isOwnedBy(pPlayer) || this.isTame() || itemstack.is(Items.ROTTEN_FLESH) && !this.isTame();
             return flag1 ? InteractionResult.CONSUME : InteractionResult.PASS;
-        } else if (this.isTame()) {
-            if (itemstack.is(Items.ROTTEN_FLESH) && this.getHealth() < this.getMaxHealth()) {
-                this.heal((float) itemstack.getFoodProperties(this).getNutrition() * 2);
-                if (!pPlayer.getAbilities().instabuild) {
-                    itemstack.shrink(1);
-                }
 
-                this.gameEvent(GameEvent.EAT, this);
-                return InteractionResult.SUCCESS;
-            } else {
 
-                InteractionResult interactionresult = super.mobInteract(pPlayer, pHand);
-                return interactionresult;
-            }
+            //tame
         } else if (itemstack.is(Items.ROTTEN_FLESH)) {
             if (!pPlayer.getAbilities().instabuild) {
                 itemstack.shrink(1);
@@ -408,11 +499,10 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
     public void equipSaddle(@javax.annotation.Nullable SoundSource pSource) {
         this.steering.setSaddle(true);
         if (pSource != null) {
-            this.level().playSound((Player)null, this, SoundEvents.STRIDER_SADDLE, pSource, 0.5F, 1.0F);
+            this.level().playSound((Player) null, this, SoundEvents.STRIDER_SADDLE, pSource, 0.5F, 1.0F);
         }
 
     }
-
 
     protected void dropEquipment() {
         super.dropEquipment();
@@ -425,8 +515,6 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
     public SoundEvent getSaddleSoundEvent() {
         return SoundEvents.CAMEL_SADDLE;
     }
-
-
 
 
 }

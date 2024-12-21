@@ -584,25 +584,5 @@ public class AgaricAnimations {
                                     AnimationChannel.Interpolations.CATMULLROM),
                             new Keyframe(0.8343334f, KeyframeAnimations.degreeVec(0f, 0f, 0f),
                                     AnimationChannel.Interpolations.CATMULLROM))).build();
-    public static final AnimationDefinition HAPPY_ANIMATION_SPORDER = AnimationDefinition.Builder.withLength(0.75f).looping()
-            .addAnimation("head",
-                    new AnimationChannel(AnimationChannel.Targets.POSITION,
-                            new Keyframe(0f, KeyframeAnimations.posVec(-0.75f, 0.75f, 0f),
-                                    AnimationChannel.Interpolations.CATMULLROM),
-                            new Keyframe(0.375f, KeyframeAnimations.posVec(0.75f, 0.75f, 0f),
-                                    AnimationChannel.Interpolations.CATMULLROM),
-                            new Keyframe(0.75f, KeyframeAnimations.posVec(-0.75f, 0.75f, 0f),
-                                    AnimationChannel.Interpolations.CATMULLROM)))
-            .addAnimation("head",
-                    new AnimationChannel(AnimationChannel.Targets.ROTATION,
-                            new Keyframe(0f, KeyframeAnimations.degreeVec(0f, 0f, -5f),
-                                    AnimationChannel.Interpolations.CATMULLROM),
-                            new Keyframe(0.375f, KeyframeAnimations.degreeVec(0f, 0f, 5f),
-                                    AnimationChannel.Interpolations.CATMULLROM),
-                            new Keyframe(0.75f, KeyframeAnimations.degreeVec(0f, 0f, -5f),
-                                    AnimationChannel.Interpolations.CATMULLROM)))
-            .addAnimation("eepy",
-                    new AnimationChannel(AnimationChannel.Targets.SCALE,
-                            new Keyframe(0f, KeyframeAnimations.scaleVec(0f, 0f, 0f),
-                                    AnimationChannel.Interpolations.CATMULLROM))).build();
+
 }
