@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "com.dead_comedian.agaric.mixin",
+  "refmap": "mixins.netherexp.refmap.json",
+  "compatibilityLevel": "JAVA_17",
+  "minVersion": "0.8",
+  "plugin": "com.dead_comedian.agaric.mixin.AgaricMixinPluginForge",
+  "client": [
+  ],
+  "mixins": [
+    "PlayerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
