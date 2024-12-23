@@ -53,6 +53,8 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
     public final AnimationState sitAnimationState = new AnimationState();
     public final AnimationState sitUpAnimationState = new AnimationState();
     public final AnimationState sitDownAnimationState = new AnimationState();
+    public final AnimationState bounceAnimationState = new AnimationState();
+    private int bounceAnimationStateTimeout = 0;
 
     public static final EntityDataAccessor<Long> LAST_POSE_CHANGE_TICK = SynchedEntityData.defineId(SporderEntity.class, EntityDataSerializers.LONG);
 
@@ -262,14 +264,28 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
         return null;
     }
 
+
+
     @Override
     public void tick() {
         super.tick();
+
+        if(this.bounceAnimationState.isStarted()){
+            this.bounceAnimationStateTimeout++;
+        }else {
+            this.bounceAnimationStateTimeout = 0;
+        }
+        if(this.bounceAnimationStateTimeout >= 7){
+            this.bounceAnimationState.stop();
+        }
+
         if (this.isOrderedToSit()) {
             List<Entity> entityBelow = this.level().getEntities(this, this.getBoundingBox().expandTowards(0, 0.2, 0));
 
             for (Entity entity : entityBelow) {
                 entity.addDeltaMovement(new Vec3(0, 1, 0));
+                this.bounceAnimationState.startIfStopped(tickCount);
+
             }
 
             level().addParticle(AgaricParticles.SLEEP.get(), this.getX(), this.getY(), this.getZ(), 1, 1, 1);
@@ -429,6 +445,7 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
                 this.navigation.stop();
                 return InteractionResult.SUCCESS;
             }
+
         }
 
 
@@ -446,8 +463,7 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
             if (this.random.nextInt(3) == 0 && !net.minecraftforge.event.ForgeEventFactory.onAnimalTame(this, pPlayer)) {
                 this.tame(pPlayer);
                 this.setOrderedToSit(true);
-                this.jumping = false;
-                this.navigation.stop();
+
                 this.level().broadcastEntityEvent(this, (byte) 7);
             } else {
                 this.level().broadcastEntityEvent(this, (byte) 6);
