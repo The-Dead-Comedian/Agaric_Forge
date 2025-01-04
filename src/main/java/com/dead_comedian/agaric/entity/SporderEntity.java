@@ -1,5 +1,6 @@
 package com.dead_comedian.agaric.entity;
 
+import com.dead_comedian.agaric.entity.goals.RandomStrollWhileNotSitting;
 import com.dead_comedian.agaric.item.AgaricItems;
 import com.dead_comedian.agaric.particle.AgaricParticles;
 import com.google.common.annotations.VisibleForTesting;
@@ -22,6 +23,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.monster.Evoker;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -41,6 +43,10 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
     //VARIABLE//
     ////////////
 
+    private int growTimer = 0;
+    AgarachnidEntity agarachnidEntity = new AgarachnidEntity(AgaricEntities.AGARACHNID.get(), this.level());
+    private boolean isGrowthStunted = false;
+
 
     protected boolean allowStandSliding;
     protected boolean isJumping;
@@ -55,9 +61,11 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
     public final AnimationState sitDownAnimationState = new AnimationState();
     public final AnimationState bounceAnimationState = new AnimationState();
     private int bounceAnimationStateTimeout = 0;
+    private int sitDownAnimationStateTimeout = 0;
+    private int sitUpAnimationStateTimeout = 0;
 
     public static final EntityDataAccessor<Long> LAST_POSE_CHANGE_TICK = SynchedEntityData.defineId(SporderEntity.class, EntityDataSerializers.LONG);
-
+    public static final EntityDataAccessor<Boolean> SITTING = SynchedEntityData.defineId(SporderEntity.class, EntityDataSerializers.BOOLEAN);
 
     ///////
     //NBT//
@@ -73,6 +81,7 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
 
     protected void defineSynchedData() {
         super.defineSynchedData();
+        this.entityData.define(SITTING, this.isOrderedToSit());
         this.entityData.define(LAST_POSE_CHANGE_TICK, 0L);
         this.entityData.define(DATA_BOOST_TIME, 0);
         this.entityData.define(DATA_SADDLE_ID, false);
@@ -87,12 +96,13 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
         super.addAdditionalSaveData(pCompound);
         pCompound.putLong("LastPoseTick", this.entityData.get(LAST_POSE_CHANGE_TICK));
         pCompound.putBoolean("Saddled", this.isSaddled());
+        pCompound.putBoolean("Tamed", this.isTame());
     }
 
     public void readAdditionalSaveData(CompoundTag pCompound) {
         super.readAdditionalSaveData(pCompound);
         this.steering.setSaddle(pCompound.getBoolean("Saddled"));
-
+        this.setTame(pCompound.getBoolean("Tamed"));
         long i = pCompound.getLong("LastPoseTick");
         if (i < 0L) {
             this.setPose(Pose.SITTING);
@@ -178,7 +188,7 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
         float f1 = this.walkAnimation.position();
         if (!this.isOrderedToSit()) {
             return (double) this.getBbHeight() + 0.2F + (double) (0.12F * Mth.cos(f1 * 2F) * 2.0F * f);
-        }else{
+        } else {
             return (double) this.getBbHeight() - 0.2F + (double) (0.12F * Mth.cos(f1 * 2F) * 2.0F * f);
         }
     }
@@ -265,31 +275,58 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
     }
 
 
-
     @Override
     public void tick() {
         super.tick();
 
-        if(this.bounceAnimationState.isStarted()){
+        if (this.bounceAnimationState.isStarted()) {
             this.bounceAnimationStateTimeout++;
-        }else {
+        } else {
             this.bounceAnimationStateTimeout = 0;
         }
-        if(this.bounceAnimationStateTimeout >= 7){
+        if (this.bounceAnimationStateTimeout >= 7) {
             this.bounceAnimationState.stop();
         }
 
+        if (this.sitDownAnimationState.isStarted()) {
+            this.sitDownAnimationStateTimeout++;
+        } else {
+            this.sitDownAnimationStateTimeout = 0;
+        }
+        if (this.sitDownAnimationStateTimeout >= 18) {
+            this.sitDownAnimationState.stop();
+        }
+
+        if (this.sitUpAnimationState.isStarted()) {
+            this.sitUpAnimationStateTimeout++;
+        } else {
+            this.sitUpAnimationStateTimeout = 0;
+        }
+        if (this.sitUpAnimationStateTimeout >= 18) {
+            this.sitUpAnimationState.stop();
+        }
+
+
+        if (this.isTame()) {
+            growTimer++;
+        }
+
+
+        if (growTimer >= 240000 && !isGrowthStunted) {
+            agarachnidEntity.moveTo(this.blockPosition(), 0.0F, 0.0F);
+            this.level().addFreshEntity(agarachnidEntity);
+            agarachnidEntity.tame((Player) this.getOwner());
+            this.discard();
+        }
+
+
         if (this.isOrderedToSit()) {
             List<Entity> entityBelow = this.level().getEntities(this, this.getBoundingBox().expandTowards(0, 0.2, 0));
-
             for (Entity entity : entityBelow) {
                 entity.addDeltaMovement(new Vec3(0, 1, 0));
                 this.bounceAnimationState.startIfStopped(tickCount);
-
             }
-
             level().addParticle(AgaricParticles.SLEEP.get(), this.getX(), this.getY(), this.getZ(), 1, 1, 1);
-
         }
         if (this.level().isClientSide()) {
             setupAnimationStates();
@@ -299,14 +336,12 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new BreedGoal(this, 1.15D));
-        this.goalSelector.addGoal(2, new TemptGoal(this, 1.2D, Ingredient.of(AgaricItems.ROTTEN_FLESH_ON_A_STICK.get()), false));
+        this.goalSelector.addGoal(2, new TemptGoal(this, 1.2D, Ingredient.of(AgaricItems.ROTTEN_FLESH_ON_A_STICK.get(), Items.ROTTEN_FLESH), false));
         this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(6, new FollowOwnerGoal(this, 1.0D, 10.0F, 2.0F, false));
-        this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.1D));
+        this.goalSelector.addGoal(3, new RandomStrollWhileNotSitting(this, 1.1D));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 3f));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
-
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -316,45 +351,6 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
     /////////////
     //ANIMATION//
     /////////////
-
-
-    public void sitDown() {
-        if (!this.isCamelSitting()) {
-            this.playSound(SoundEvents.CAMEL_SIT, 1.0F, 1.0F);
-            this.setPose(Pose.SITTING);
-            this.resetLastPoseChangeTick(-this.level().getGameTime());
-        }
-    }
-
-    public void standUp() {
-        if (this.isCamelSitting()) {
-            this.playSound(SoundEvents.CAMEL_STAND, 1.0F, 1.0F);
-            this.setPose(Pose.STANDING);
-            this.resetLastPoseChangeTick(this.level().getGameTime());
-        }
-    }
-
-
-    public boolean isCamelVisuallySitting() {
-        return this.getPoseTime() < 0L != this.isCamelSitting();
-    }
-
-    public long getPoseTime() {
-        return this.level().getGameTime() - Math.abs(this.entityData.get(LAST_POSE_CHANGE_TICK));
-    }
-
-    private boolean isVisuallySittingDown() {
-        return this.isCamelSitting() && this.getPoseTime() < 20 && this.getPoseTime() >= 0L;
-    }
-
-    public boolean isCamelSitting() {
-        return this.entityData.get(LAST_POSE_CHANGE_TICK) < 0L;
-    }
-
-    public boolean isInPoseTransition() {
-        long i = this.getPoseTime();
-        return i < (long) (20);
-    }
 
     @Override
     protected void updateWalkAnimation(float pPartialTick) {
@@ -372,25 +368,10 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
         if (!this.isOrderedToSit()) {
             this.idleAnimationState.startIfStopped(this.tickCount);
             this.sitAnimationState.stop();
-        }
-
-        if (this.isCamelVisuallySitting()) {
-            this.sitUpAnimationState.stop();
+        } else if (this.isOrderedToSit() && !this.sitDownAnimationState.isStarted()) {
+            this.sitAnimationState.startIfStopped(this.tickCount);
             this.idleAnimationState.stop();
-            if (this.isVisuallySittingDown()) {
-                this.sitDownAnimationState.startIfStopped(this.tickCount);
-                this.sitAnimationState.stop();
-            } else {
-                this.sitDownAnimationState.stop();
-                this.sitAnimationState.startIfStopped(this.tickCount);
-            }
-        } else {
-            this.sitDownAnimationState.stop();
-            this.sitAnimationState.stop();
-
-            this.sitUpAnimationState.animateWhen(this.isInPoseTransition() && this.getPoseTime() >= 0L, this.tickCount);
         }
-
 
     }
 
@@ -419,6 +400,17 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
 
+        //stunted growth
+
+        if (!isGrowthStunted && itemstack.is(Items.FERMENTED_SPIDER_EYE)) {
+            isGrowthStunted = true;
+            if (!pPlayer.getAbilities().instabuild) {
+                itemstack.shrink(1);
+            }
+
+        }
+
+
         //unequip saddle
 
         if (this.isSaddled() && itemstack.is(Items.SHEARS)) {
@@ -429,20 +421,15 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
 
         //sitting
         if (this.isTame() && this.level().isClientSide()) {
-
             InteractionResult interactionresult = super.mobInteract(pPlayer, pHand);
             if (!interactionresult.consumesAction() && this.isOwnedBy(pPlayer) && !pPlayer.isCrouching()) {
-
-                System.out.println(this.isOrderedToSit());
                 this.setOrderedToSit(!this.isOrderedToSit());
                 if (this.isOrderedToSit()) {
                     this.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 1200, 1));
-                    sitDown();
+                    this.sitDownAnimationState.startIfStopped(tickCount);
                 } else {
-                    standUp();
+                    this.sitUpAnimationState.startIfStopped(tickCount);
                 }
-                this.jumping = false;
-                this.navigation.stop();
                 return InteractionResult.SUCCESS;
             }
 
@@ -462,7 +449,6 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
 
             if (this.random.nextInt(3) == 0 && !net.minecraftforge.event.ForgeEventFactory.onAnimalTame(this, pPlayer)) {
                 this.tame(pPlayer);
-                this.setOrderedToSit(true);
 
                 this.level().broadcastEntityEvent(this, (byte) 7);
             } else {

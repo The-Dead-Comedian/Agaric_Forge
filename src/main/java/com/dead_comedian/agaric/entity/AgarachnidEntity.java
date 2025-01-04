@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.UUID;
 
-public class AgarachnidEntity extends TamableAnimal implements NeutralMob{
+public class AgarachnidEntity extends TamableAnimal implements NeutralMob {
     protected AgarachnidEntity(EntityType<? extends TamableAnimal> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
     }
@@ -66,7 +66,7 @@ public class AgarachnidEntity extends TamableAnimal implements NeutralMob{
 
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(SITTING,this.isOrderedToSit());
+        this.entityData.define(SITTING, this.isOrderedToSit());
         this.entityData.define(LAST_POSE_CHANGE_TICK, 0L);
     }
 
@@ -136,7 +136,7 @@ public class AgarachnidEntity extends TamableAnimal implements NeutralMob{
         } else {
             this.sitUpAnimationStateTimeout = 0;
         }
-        if (this.sitUpAnimationStateTimeout >= 32) {
+        if (this.sitUpAnimationStateTimeout >= 31) {
             this.sitUpAnimationState.stop();
         }
 
@@ -174,7 +174,6 @@ public class AgarachnidEntity extends TamableAnimal implements NeutralMob{
     /////////////
 
 
-
     @Override
     protected void updateWalkAnimation(float pPartialTick) {
         float f;
@@ -188,19 +187,16 @@ public class AgarachnidEntity extends TamableAnimal implements NeutralMob{
 
     }
 
-
-
     private void setupAnimationStates() {
-        if (!this.isOrderedToSit() && !(this.getDeltaMovement().horizontalDistance() > 0.01F )) {
+        if (!this.isOrderedToSit() && !(this.getDeltaMovement().horizontalDistance() > 0.01F)) {
             this.idleAnimationState.startIfStopped(this.tickCount);
             this.sitAnimationState.stop();
             this.walkAnimationState.stop();
-        }else if(!this.isOrderedToSit() && this.getDeltaMovement().horizontalDistance() > 0.01F){
+        } else if (!this.isOrderedToSit() && this.getDeltaMovement().horizontalDistance() > 0.01F) {
             this.walkAnimationState.startIfStopped(this.tickCount);
             this.sitAnimationState.stop();
             this.idleAnimationState.stop();
-        }
-        else if(this.isOrderedToSit() && !this.sitDownAnimationState.isStarted()){
+        } else if (this.isOrderedToSit() && !this.sitDownAnimationState.isStarted()) {
             this.sitAnimationState.startIfStopped(this.tickCount);
             this.walkAnimationState.stop();
             this.idleAnimationState.stop();
@@ -228,50 +224,21 @@ public class AgarachnidEntity extends TamableAnimal implements NeutralMob{
             InteractionResult interactionresult = super.mobInteract(pPlayer, pHand);
             if (!interactionresult.consumesAction() && this.isOwnedBy(pPlayer) && !pPlayer.isCrouching()) {
 
-                System.out.println(this.isOrderedToSit());
+
                 this.setOrderedToSit(!this.isOrderedToSit());
                 if (this.isOrderedToSit()) {
                     this.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 1200, 1));
                     this.sitDownAnimationState.startIfStopped(tickCount);
                 } else {
                     this.sitUpAnimationState.startIfStopped(tickCount);
+                    this.sitAnimationState.stop();
                 }
                 return InteractionResult.SUCCESS;
             }
 
         }
 
-
-        if (this.level().isClientSide) {
-            boolean flag1 = this.isOwnedBy(pPlayer) || this.isTame() || itemstack.is(Items.ROTTEN_FLESH) && !this.isTame();
-            return flag1 ? InteractionResult.CONSUME : InteractionResult.PASS;
-
-
-            //tame
-        } else if (itemstack.is(Items.ROTTEN_FLESH)) {
-            if (!pPlayer.getAbilities().instabuild) {
-                itemstack.shrink(1);
-            }
-
-            if (this.random.nextInt(3) == 0 && !net.minecraftforge.event.ForgeEventFactory.onAnimalTame(this, pPlayer)) {
-                this.tame(pPlayer);
-//                this.setOrderedToSit(true);
-//
-//                if (this.isOrderedToSit()) {
-//                    sitDown();
-//                }
-
-
-                this.level().broadcastEntityEvent(this, (byte) 7);
-            } else {
-                this.level().broadcastEntityEvent(this, (byte) 6);
-            }
-
-
-            return InteractionResult.SUCCESS;
-        } else {
-            return super.mobInteract(pPlayer, pHand);
-        }
+        return super.mobInteract(pPlayer, pHand);
     }
 
 
@@ -296,7 +263,6 @@ public class AgarachnidEntity extends TamableAnimal implements NeutralMob{
     protected SoundEvent getDeathSound() {
         return SoundEvents.DOLPHIN_DEATH;
     }
-
 
 
     /////////////

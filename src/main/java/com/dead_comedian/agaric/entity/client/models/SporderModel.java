@@ -69,7 +69,7 @@ public class SporderModel<T extends SporderEntity> extends HierarchicalModel<T> 
     public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.root().getAllParts().forEach(ModelPart::resetPose);
 
-        if (!((SporderEntity) entity).isOrderedToSit()) {
+        if (!entity.isOrderedToSit() && !entity.sitUpAnimationState.isStarted()) {
             this.applyHeadRotation(netHeadYaw, headPitch, ageInTicks);
             this.animateWalk(AgaricAnimations.WALK_SPORDER, limbSwing, limbSwingAmount, 2f, 2.5f);
         }
