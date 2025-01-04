@@ -29,8 +29,6 @@ public abstract class PlayerMixin  extends LivingEntity {
             cancellable = true)
     private void causeFalldamage(float pFallDistance, float pMultiplier, DamageSource pSource, CallbackInfoReturnable<Boolean> cir){
         Entity vehicle =    this.getVehicle();
-
-        System.out.println(!(vehicle instanceof SporderEntity));
        if(vehicle instanceof SporderEntity){
            cir.setReturnValue(false);
        }

@@ -2,6 +2,7 @@ package com.dead_comedian.agaric;
 
 import com.dead_comedian.agaric.block.AgaricBlocks;
 import com.dead_comedian.agaric.entity.AgaricEntities;
+import com.dead_comedian.agaric.entity.client.renderer.AgarachnidRenderer;
 import com.dead_comedian.agaric.entity.client.renderer.SporderRenderer;
 import com.dead_comedian.agaric.item.AgaricCreativeTab;
 import com.dead_comedian.agaric.item.AgaricItems;
@@ -67,7 +68,7 @@ public class AgaricMod
         public static void onClientSetup(FMLClientSetupEvent event)
         {
             EntityRenderers.register(AgaricEntities.SPORDER.get(), SporderRenderer::new);
-
+            EntityRenderers.register(AgaricEntities.AGARACHNID.get(), AgarachnidRenderer::new);
 
         }
     }

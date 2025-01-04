@@ -21,7 +21,7 @@ public class AgaricCreativeTab {
                     .displayItems((pParameters, pOutput) -> {
                         pOutput.accept(AgaricItems.ROTTEN_FLESH_ON_A_STICK.get());
                         pOutput.accept(AgaricItems.SPORDER_SPAWN_EGG.get());
-
+                        pOutput.accept(AgaricItems.AGARACHNID_SPAWN_EGG.get());
                         pOutput.accept(AgaricBlocks.GREEN_MUSHROOM_BLOCK.get());
                         pOutput.accept(AgaricBlocks.GREEN_MUSHROOM.get());
 

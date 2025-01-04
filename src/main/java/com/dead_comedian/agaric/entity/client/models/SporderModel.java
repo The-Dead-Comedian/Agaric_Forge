@@ -17,7 +17,7 @@ import org.checkerframework.checker.units.qual.A;
 import org.joml.Math;
 
 
-public class SporderModel<T extends Entity> extends HierarchicalModel<T> {
+public class SporderModel<T extends SporderEntity> extends HierarchicalModel<T> {
     private final ModelPart bone;
 
     private final ModelPart head;
@@ -75,11 +75,11 @@ public class SporderModel<T extends Entity> extends HierarchicalModel<T> {
         }
 
 
-        this.animate(((SporderEntity) entity).idleAnimationState, AgaricAnimations.IDLE_SPORDER, ageInTicks, 1f);
-        this.animate(((SporderEntity) entity).sitAnimationState, AgaricAnimations.SIT_SPORDER, ageInTicks, 1f);
-        this.animate(((SporderEntity) entity).sitDownAnimationState, AgaricAnimations.SIT_TRANSITION_IN_SPORDER, ageInTicks, 1f);
-        this.animate(((SporderEntity) entity).sitUpAnimationState, AgaricAnimations.SIT_TRANSITION_OUT_SPORDER, ageInTicks, 1f);
-        this.animate(((SporderEntity) entity).bounceAnimationState, AgaricAnimations.SPORDER_BOUNCING, ageInTicks, 1f);
+        this.animate(entity.idleAnimationState, AgaricAnimations.IDLE_SPORDER, ageInTicks, 1f);
+        this.animate(entity.sitAnimationState, AgaricAnimations.SIT_SPORDER, ageInTicks, 1f);
+        this.animate(entity.sitDownAnimationState, AgaricAnimations.SIT_TRANSITION_IN_SPORDER, ageInTicks, 1f);
+        this.animate(entity.sitUpAnimationState, AgaricAnimations.SIT_TRANSITION_OUT_SPORDER, ageInTicks, 1f);
+        this.animate(entity.bounceAnimationState, AgaricAnimations.SPORDER_BOUNCING, ageInTicks, 1f);
     }
 
     private void applyHeadRotation(float pNetHeadYaw, float pHeadPitch, float pAgeInTicks) {

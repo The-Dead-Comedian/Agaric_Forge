@@ -1,8 +1,11 @@
 {
   "item.agaric.rotten_flesh_on_a_stick": "Rotten Flesh On A Stick",
   "item.agaric.sporder_spawn_egg": "Sporder Spawn Egg",
+  "item.agaric.agarachnid_spawn_egg": "Agarachnid Spawn Egg",
 
-  "entity.agaric.sporder": "sporder",
+
+  "entity.agaric.sporder": "Sporder",
+  "entity.agaric.agarachnid": "Agarachnid",
 
 
   "block.agaric.green_mushroom_block": "Green Mushroom Block",

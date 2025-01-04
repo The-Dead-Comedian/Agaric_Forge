@@ -22,6 +22,10 @@ public class AgaricItems {
     public static final RegistryObject<Item> SPORDER_SPAWN_EGG = ITEMS.register("sporder_spawn_egg",
             () -> new ForgeSpawnEggItem(AgaricEntities.SPORDER,  0xe0d3ba,0x42964a, new Item.Properties()));
 
+    public static final RegistryObject<Item> AGARACHNID_SPAWN_EGG = ITEMS.register("agarachnid_spawn_egg",
+            () -> new ForgeSpawnEggItem(AgaricEntities.AGARACHNID,  0xe0d3ba,0x42964a, new Item.Properties()));
+
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

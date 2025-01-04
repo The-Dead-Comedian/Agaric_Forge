@@ -1,6 +1,7 @@
 package com.dead_comedian.agaric.event;
 
 import com.dead_comedian.agaric.AgaricMod;
+import com.dead_comedian.agaric.entity.AgarachnidEntity;
 import com.dead_comedian.agaric.entity.AgaricEntities;
 import com.dead_comedian.agaric.entity.SporderEntity;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
@@ -13,5 +14,6 @@ public class AgaricEventBusEvents {
     @SubscribeEvent
     public static void registerAttributes(EntityAttributeCreationEvent event) {
         event.put(AgaricEntities.SPORDER.get(), SporderEntity.createAttributes().build());
+        event.put(AgaricEntities.AGARACHNID.get(), AgarachnidEntity.createAttributes().build());
     }
 }

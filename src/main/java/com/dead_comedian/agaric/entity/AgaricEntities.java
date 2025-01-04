@@ -18,6 +18,11 @@ public class AgaricEntities {
                     .sized(1, 1).build("sporder"));
 
 
+    public static final RegistryObject<EntityType<AgarachnidEntity>> AGARACHNID =
+            ENTITY_TYPES.register("agarachnid", () -> EntityType.Builder.of(AgarachnidEntity::new, MobCategory.CREATURE)
+                    .sized(3, 3.5F).build("agarachnid"));
+
+
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);
     }
