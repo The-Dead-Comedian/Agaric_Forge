@@ -219,13 +219,17 @@ public class AgarachnidEntity extends TamableAnimal implements NeutralMob {
         ItemStack itemstack = pPlayer.getItemInHand(pHand);
 
         //sitting
-        if (this.isTame() && this.level().isClientSide()) {
+        if (this.isTame()) {
 
             InteractionResult interactionresult = super.mobInteract(pPlayer, pHand);
             if (!interactionresult.consumesAction() && this.isOwnedBy(pPlayer) && !pPlayer.isCrouching()) {
 
-
-                this.setOrderedToSit(!this.isOrderedToSit());
+                if (!this.level().isClientSide) {
+                    this.setOrderedToSit(!this.isOrderedToSit());
+                }
+                if (this.level().isClientSide) {
+                    this.setOrderedToSit(!this.isOrderedToSit());
+                }
                 if (this.isOrderedToSit()) {
                     this.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 1200, 1));
                     this.sitDownAnimationState.startIfStopped(tickCount);

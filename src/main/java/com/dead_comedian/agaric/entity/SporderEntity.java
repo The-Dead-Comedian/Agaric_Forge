@@ -23,7 +23,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.monster.Evoker;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -279,6 +278,7 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
     public void tick() {
         super.tick();
 
+
         if (this.bounceAnimationState.isStarted()) {
             this.bounceAnimationStateTimeout++;
         } else {
@@ -323,8 +323,14 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
         if (this.isOrderedToSit()) {
             List<Entity> entityBelow = this.level().getEntities(this, this.getBoundingBox().expandTowards(0, 0.2, 0));
             for (Entity entity : entityBelow) {
-                entity.addDeltaMovement(new Vec3(0, 1, 0));
-                this.bounceAnimationState.startIfStopped(tickCount);
+                if (entity instanceof LivingEntity) {
+                    entity.addDeltaMovement(new Vec3(0, 1, 0));
+                    this.bounceAnimationState.startIfStopped(tickCount);
+                    if (!(this.isOwnedBy((LivingEntity) entity))){
+                        this.setOrderedToSit(false);
+                        this.sitUpAnimationState.startIfStopped(tickCount);
+                    }
+                }
             }
             level().addParticle(AgaricParticles.SLEEP.get(), this.getX(), this.getY(), this.getZ(), 1, 1, 1);
         }
@@ -420,10 +426,15 @@ public class SporderEntity extends TamableAnimal implements Saddleable, ItemStee
         }
 
         //sitting
-        if (this.isTame() && this.level().isClientSide()) {
+        if (this.isTame()) {
             InteractionResult interactionresult = super.mobInteract(pPlayer, pHand);
             if (!interactionresult.consumesAction() && this.isOwnedBy(pPlayer) && !pPlayer.isCrouching()) {
-                this.setOrderedToSit(!this.isOrderedToSit());
+                if (!this.level().isClientSide) {
+                    this.setOrderedToSit(!this.isOrderedToSit());
+                }
+                if (this.level().isClientSide) {
+                    this.setOrderedToSit(!this.isOrderedToSit());
+                }
                 if (this.isOrderedToSit()) {
                     this.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 1200, 1));
                     this.sitDownAnimationState.startIfStopped(tickCount);
